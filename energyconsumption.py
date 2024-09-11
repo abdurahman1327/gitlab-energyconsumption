@@ -93,18 +93,20 @@ ax2.tick_params(axis='y', labelcolor=color)
 fig.tight_layout()
 st.pyplot(fig)
 
-# Bar Chart for Total Energy Consumption by Time Interval
-st.markdown("### Energy Consumption by Time Interval")
+# Adding Heatmap for CPU and Memory Utilization
+st.markdown("### CPU and Memory Usage Heatmap")
 
-# Set time intervals (e.g., 10 seconds) and aggregate data
-intervals = pd.Grouper(key='time', freq='10S')
-df_resampled = df_filtered.resample(intervals, on='time').sum()
+# Create a heatmap with Seaborn
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.heatmap([df_filtered['cpu_usage'], df_filtered['memory_usage']],
+            cmap="RdYlGn", ax=ax, cbar=True, cbar_kws={'label': 'Usage'},
+            linewidths=0.5, linecolor='gray')
 
-fig, ax = plt.subplots(figsize=(12, 6))
-df_resampled['energy_consumption'].plot(kind='bar', ax=ax, color='skyblue', edgecolor='black')
-ax.set_xlabel('Time Interval')
-ax.set_ylabel('Total Energy Consumption (kWh)')
-ax.set_title('Energy Consumption by Time Interval')
+# Removing labels and ticks for a cleaner look
+ax.set_xticks([])
+ax.set_yticks([])
+ax.set_xticklabels([])
+ax.set_yticklabels([])
 
 st.pyplot(fig)
 
