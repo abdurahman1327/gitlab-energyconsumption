@@ -47,7 +47,7 @@ df['energy_consumption'] = df['cpu_usage'] * df['memory_usage'] / 1e6
 # Sidebar for time range selection
 st.sidebar.title("⚙️ Filters")
 start_time = st.sidebar.time_input('Start Time', df['time'].min().time())
-end_time = st.sidebar.time_input('End Time', (df['time'].min() + timedelta(minutes=2)).time())
+end_time = st.sidebar.time_input('End Time', (df['time'].min() + timedelta(minutes=1)).time())  # Halve the time range
 
 # Filter the DataFrame based on the selected time range
 df_filtered = df[(df['time'].dt.time >= start_time) & (df['time'].dt.time <= end_time)]
@@ -88,9 +88,9 @@ axs[1, 0].set_title('Memory Usage (MB)')
 axs[1, 0].set_ylabel('Memory Usage (MB)')
 
 # Plot Cumulative Values
-df_filtered['cumulative_energy'] = df_filtered['energy_consumption'].cumsum()
-df_filtered['cumulative_cpu'] = df_filtered['cpu_usage'].cumsum()
-df_filtered['cumulative_memory'] = (df_filtered['memory_usage'] / 1e6).cumsum()
+df_filtered['cumulative_energy'] = df_filtered['energy_consumption'].cumsum() / 2  # Halve the values
+df_filtered['cumulative_cpu'] = df_filtered['cpu_usage'].cumsum() / 2  # Halve the values
+df_filtered['cumulative_memory'] = (df_filtered['memory_usage'] / 1e6).cumsum() / 2  # Halve the values
 
 axs[1, 1].plot(df_filtered['time'], df_filtered['cumulative_energy'], color='tab:blue', label='Cumulative Energy Consumption')
 axs[1, 1].plot(df_filtered['time'], df_filtered['cumulative_cpu'], color='tab:orange', linestyle='--', label='Cumulative CPU Usage')
@@ -134,10 +134,4 @@ else:
     st.info("Pipelines are running efficiently with low energy consumption.")
 
 # Footer
-st.markdown("<hr>", unsafe_allow_html=True)
-st.markdown(
-    """<div style="text-align: center; font-size: 12px;">
-    Made with 💻 by [Your Name] for the Hackathon Project.
-    </div>""",
-    unsafe_allow_html=True
-)
+st.markdown("<
