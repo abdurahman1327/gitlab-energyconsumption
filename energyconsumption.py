@@ -6,24 +6,9 @@ from datetime import timedelta
 
 
 
-# Set Streamlit theme and page configuration
+# Setting the Streamlit theme and overall color palette for visual consistency
 st.set_page_config(page_title="Energy Consumption Dashboard", page_icon="⚡", layout="wide")
-st.markdown("""
-    <style>
-    .reportview-container {
-        background-color: #2E2E2E;
-    }
-    .sidebar .sidebar-content {
-        background-color: #1E1E1E;
-    }
-    .block-container {
-        padding: 2rem;
-    }
-    .css-1v0mbdj {
-        color: white;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+sns.set_palette("RdYlGn")  # Red-Yellow-Green color palette for energy usage
 
 # Sample data for energy consumption
 data = {
@@ -91,32 +76,40 @@ st.markdown("### CPU and Memory Usage Heatmap")
 
 # Create a heatmap with Seaborn
 fig, ax = plt.subplots(figsize=(10, 6))
-sns.heatmap([df_filtered['cpu_usage'], df_filtered['memory_usage']], cmap="RdYlGn_r", ax=ax, cbar=True, cbar_kws={'label': 'Usage'}, linewidths=0.5, linecolor='black')
+sns.heatmap([df_filtered['cpu_usage'], df_filtered['memory_usage']],
+            cmap="RdYlGn", ax=ax, cbar=True, cbar_kws={'label': 'Usage'},
+            linewidths=0.5, linecolor='gray')
+
+# Removing labels and ticks for a cleaner look
+ax.set_xticks([])
+ax.set_yticks([])
+ax.set_xticklabels([])
 ax.set_yticklabels([])
-ax.set_xticklabels(df_filtered['time'].dt.strftime('%H:%M:%S'), rotation=45)
-
-# Hide gridlines
-ax.grid(False)
-
-# Use dark background color
-ax.set_facecolor('#2E2E2E')
-fig.patch.set_facecolor('#2E2E2E')
 
 st.pyplot(fig)
 
-# Enhanced Efficiency Overview
+# Clearer Efficiency Overview
 st.markdown("### Efficiency Overview")
+
+# Define benchmarks or targets
+target_cpu_usage = 0.20
+target_memory_usage = 6142000
+
+# Compute efficiency
+cpu_efficiency = avg_cpu / target_cpu_usage * 100
+memory_efficiency = avg_memory / target_memory_usage * 100
+
 col4, col5 = st.columns(2)
 
-# CPU Usage Progress
-col4.markdown("#### CPU Usage")
-cpu_efficiency = int(avg_cpu)
-col4.progress(cpu_efficiency, text=f"CPU Usage: {cpu_efficiency}%")
+col4.metric("CPU Efficiency", f"{cpu_efficiency:.1f}%", delta=f"Target: {target_cpu_usage * 100:.1f}%")
+col5.metric("Memory Efficiency", f"{memory_efficiency:.1f}%", delta=f"Target: {target_memory_usage / 1e6:.1f} MB")
 
-# Memory Usage Progress
-col5.markdown("#### Memory Usage")
-memory_efficiency = avg_memory / max(df['memory_usage']) * 100
-col5.progress(int(memory_efficiency), text=f"Memory Usage: {int(memory_efficiency)}%")
+# Add progress bars
+st.markdown("#### CPU Usage Progress")
+st.progress(int(cpu_efficiency))
+
+st.markdown("#### Memory Usage Progress")
+st.progress(int(memory_efficiency))
 
 # Energy-saving tips based on consumption
 st.markdown("## Energy-Saving Insights 💡")
@@ -128,7 +121,7 @@ else:
 # Footer
 st.markdown("<hr>", unsafe_allow_html=True)
 st.markdown(
-    """<div style="text-align: center; font-size: 12px; color: white;">
+    """<div style="text-align: center; font-size: 12px;">
     Made with 💻 by [Your Name] for the Hackathon Project.
     </div>""",
     unsafe_allow_html=True
