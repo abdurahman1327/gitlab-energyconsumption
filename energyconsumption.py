@@ -67,39 +67,40 @@ col1.metric("⚡ Total Energy Consumption", f"{total_energy:.2f} kWh", delta=f"{
 col2.metric("💻 Avg CPU Usage", f"{avg_cpu:.2f}%", delta=f"{avg_cpu - df['cpu_usage'].mean():.2f}")
 col3.metric("📊 Avg Memory Usage", f"{avg_memory / 1e6:.2f} MB", delta=f"{avg_memory - df['memory_usage'].mean():.2f}")
 
-# Pipeline Metrics: Four mini graphs
-st.markdown("### Pipeline Metrics")
+# Mini-Plots Section
+st.markdown("### Metrics Over Time")
 
-# Create a 2x2 grid of mini-graphs
-fig, axs = plt.subplots(2, 2, figsize=(14, 10), sharex=True)
-fig.suptitle('Pipeline Metrics Over Time', fontsize=16)
+fig, axs = plt.subplots(2, 2, figsize=(16, 12), sharex=True)
 
-# Energy Consumption Plot
+# Plot Energy Consumption
 axs[0, 0].plot(df_filtered['time'], df_filtered['energy_consumption'], color='tab:blue')
-axs[0, 0].set_title('Energy Consumption')
-axs[0, 0].set_ylabel('kWh')
+axs[0, 0].set_title('Energy Consumption (kWh)')
+axs[0, 0].set_ylabel('Energy Consumption (kWh)')
 
-# CPU Usage Plot
+# Plot CPU Usage
 axs[0, 1].plot(df_filtered['time'], df_filtered['cpu_usage'], color='tab:orange')
-axs[0, 1].set_title('CPU Usage')
-axs[0, 1].set_ylabel('%')
+axs[0, 1].set_title('CPU Usage (%)')
+axs[0, 1].set_ylabel('CPU Usage (%)')
 
-# Memory Usage Plot
+# Plot Memory Usage
 axs[1, 0].plot(df_filtered['time'], df_filtered['memory_usage'] / 1e6, color='tab:green')
-axs[1, 0].set_title('Memory Usage')
-axs[1, 0].set_ylabel('MB')
-axs[1, 0].set_xlabel('Time')
+axs[1, 0].set_title('Memory Usage (MB)')
+axs[1, 0].set_ylabel('Memory Usage (MB)')
 
-# Combined Plot
-axs[1, 1].plot(df_filtered['time'], df_filtered['energy_consumption'], color='tab:blue', label='Energy Consumption')
-axs[1, 1].plot(df_filtered['time'], df_filtered['cpu_usage'], color='tab:orange', linestyle='--', label='CPU Usage')
-axs[1, 1].plot(df_filtered['time'], df_filtered['memory_usage'] / 1e6, color='tab:green', linestyle=':', label='Memory Usage')
-axs[1, 1].set_title('All Metrics')
-axs[1, 1].set_ylabel('Value')
-axs[1, 1].set_xlabel('Time')
+# Plot Cumulative Values
+df_filtered['cumulative_energy'] = df_filtered['energy_consumption'].cumsum()
+df_filtered['cumulative_cpu'] = df_filtered['cpu_usage'].cumsum()
+df_filtered['cumulative_memory'] = (df_filtered['memory_usage'] / 1e6).cumsum()
+
+axs[1, 1].plot(df_filtered['time'], df_filtered['cumulative_energy'], color='tab:blue', label='Cumulative Energy Consumption')
+axs[1, 1].plot(df_filtered['time'], df_filtered['cumulative_cpu'], color='tab:orange', linestyle='--', label='Cumulative CPU Usage')
+axs[1, 1].plot(df_filtered['time'], df_filtered['cumulative_memory'], color='tab:green', linestyle=':', label='Cumulative Memory Usage')
+axs[1, 1].set_title('Cumulative Metrics')
+axs[1, 1].set_ylabel('Cumulative Value')
 axs[1, 1].legend()
 
-fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+# Improve layout
+plt.tight_layout()
 st.pyplot(fig)
 
 # Clearer Efficiency Overview
