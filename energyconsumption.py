@@ -1,17 +1,17 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
-from datetime import timedelta
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, classification_report
+from sklearn.preprocessing import LabelEncoder
 
+# Streamlit settings
+st.set_page_config(page_title="Energy and App Classification", page_icon="⚡", layout="wide")
 
-
-# Setting the Streamlit theme and overall color palette for visual consistency
-st.set_page_config(page_title="Energy Consumption Dashboard", page_icon="⚡", layout="wide")
-sns.set_palette("RdYlGn")  # Red-Yellow-Green color palette for energy usage
-
-# Sample data for energy consumption
-data = {
+# Sample data
+simple_app_data = {
     'time': [
         "02:30:40", "02:30:43", "02:30:46", "02:30:49", "02:30:52", "02:30:55",
         "02:30:58", "02:31:01", "02:31:04", "02:31:07", "02:31:10", "02:31:13",
@@ -21,123 +21,116 @@ data = {
         "02:32:10", "02:32:13", "02:32:16", "02:32:19", "02:32:22", "02:32:25",
         "02:32:28", "02:32:31", "02:32:34", "02:32:37", "02:32:40"
     ],
-    'cpu_usage': [
-        0.17, 0.00, 0.00, 0.00, 0.00, 0.17, 0.00, 0.17, 0.17, 0.00, 0.00, 0.17,
-        0.00, 0.00, 0.00, 0.00, 0.17, 0.17, 0.00, 0.00, 0.33, 0.17, 0.00, 0.00,
-        0.17, 0.00, 0.00, 0.00, 0.17, 0.00, 0.00, 0.17, 0.00, 0.17, 0.00, 0.00,
-        0.00, 0.17, 0.17, 0.00, 0.33
-    ],
-    'memory_usage': [
-        6141972, 6141972, 6141972, 6141972, 6141972, 6141972, 6141972, 6141972,
-        6141972, 6141972, 6141972, 6141972, 6141972, 6141972, 6141972, 6141972,
-        6141972, 6141972, 6141972, 6141972, 6141972, 6141972, 6141972, 6141972,
-        6141972, 6141972, 6141972, 6141972, 6141972, 6141972, 6141972, 6141972,
-        6141972, 6141972, 6141972, 6141972, 6141972, 6141972, 6141972, 6141972,
-        6141972
-    ]
+    'cpu_usage': [0.17, 0.00, 0.00, 0.00, 0.00, 0.17, 0.00, 0.17, 0.17, 0.00, 0.00, 0.17,
+                  0.00, 0.00, 0.00, 0.00, 0.17, 0.17, 0.00, 0.00, 0.33, 0.17, 0.00, 0.00,
+                  0.17, 0.00, 0.00, 0.00, 0.17, 0.00, 0.00, 0.17, 0.00, 0.17, 0.00, 0.00,
+                  0.00, 0.17, 0.17, 0.00, 0.33],
+    'memory_usage': [6141972]*40
 }
 
-# Convert the data into a DataFrame
-df = pd.DataFrame(data)
-df['time'] = pd.to_datetime(df['time'], format='%H:%M:%S')
+matrix_app_data = {
+    'time': [
+        "03:01:22", "03:01:25", "03:01:28", "03:01:31", "03:01:34", "03:01:37",
+        "03:01:40", "03:01:43", "03:01:46", "03:01:49", "03:01:52", "03:01:55",
+        "03:01:58", "03:02:01", "03:02:04", "03:02:07", "03:02:10", "03:02:13",
+        "03:02:16", "03:02:19", "03:02:22", "03:02:25", "03:02:28", "03:02:31",
+        "03:02:34", "03:02:37", "03:02:40", "03:02:43", "03:02:46", "03:02:49",
+        "03:02:52", "03:02:55", "03:02:58", "03:03:01", "03:03:04", "03:03:07",
+        "03:03:10", "03:03:13", "03:03:16", "03:03:19", "03:03:22"
+    ],
+    'cpu_usage': [0.00, 0.00, 0.00, 0.17, 0.00, 0.17, 0.00, 0.00, 0.17, 0.00, 0.00, 0.00,
+                  0.17, 0.00, 0.00, 0.17, 0.00, 0.00, 0.17, 0.00, 0.00, 0.17, 0.17, 0.00,
+                  0.17, 0.00, 0.00, 0.17, 0.00, 0.17, 0.17, 0.00, 0.00, 0.17, 0.00, 0.00,
+                  0.17, 0.00, 0.17, 0.00, 0.17],
+    'memory_usage': [6129092]*40
+}
 
-# Calculate energy consumption (a simplified formula for demonstration)
-df['energy_consumption'] = df['cpu_usage'] * df['memory_usage'] / 1e6
+# Convert both datasets to DataFrames
+df_simple = pd.DataFrame(simple_app_data)
+df_matrix = pd.DataFrame(matrix_app_data)
 
-# Sidebar for time range selection
-st.sidebar.title("⚙️ Filters")
-start_time = st.sidebar.time_input('Start Time', df['time'].min().time())
-end_time = st.sidebar.time_input('End Time', (df['time'].min() + timedelta(minutes=1)).time())  # Halve the time range
+# Combine the datasets and preprocess
+df_simple['app_type'] = 'simple'
+df_matrix['app_type'] = 'matrix'
+df_combined = pd.concat([df_simple, df_matrix], ignore_index=True)
+df_combined['time'] = pd.to_datetime(df_combined['time'], format='%H:%M:%S')
+df_combined['time_diff'] = df_combined['time'].diff().dt.total_seconds().fillna(0)
 
-# Filter the DataFrame based on the selected time range
-df_filtered = df[(df['time'].dt.time >= start_time) & (df['time'].dt.time <= end_time)]
+# Assumed power consumption values (in Watts)
+cpu_power_watt = 50
+memory_power_watt = 5
+df_combined['energy_consumption_joules'] = (df_combined['cpu_usage'] * cpu_power_watt + memory_power_watt) * df_combined['time_diff']
 
-# Dashboard Title
-st.title('⚡ Pipeline Energy Consumption Dashboard')
+# Encoding app type
+label_encoder = LabelEncoder()
+df_combined['app_type_encoded'] = label_encoder.fit_transform(df_combined['app_type'])
 
-# KPI Section: Show key metrics
-st.markdown("## Key Metrics")
-col1, col2, col3 = st.columns(3)
+# Features and targets
+X = df_combined[['cpu_usage', 'memory_usage', 'energy_consumption_joules']]
+y_energy = df_combined['energy_consumption_joules']
+y_app_type = df_combined['app_type_encoded']
 
-total_energy = df_filtered['energy_consumption'].sum()
-avg_cpu = df_filtered['cpu_usage'].mean()
-avg_memory = df_filtered['memory_usage'].mean()
+# Train-test split
+X_train, X_test, y_energy_train, y_energy_test = train_test_split(X, y_energy, test_size=0.2, random_state=42)
+_, _, y_app_type_train, y_app_type_test = train_test_split(X, y_app_type, test_size=0.2, random_state=42)
 
-col1.metric("⚡ Total Energy Consumption", f"{total_energy:.2f} kWh", delta=f"{(total_energy - df['energy_consumption'].mean()):.2f}")
-col2.metric("💻 Avg CPU Usage", f"{avg_cpu:.2f}%", delta=f"{avg_cpu - df['cpu_usage'].mean():.2f}")
-col3.metric("📊 Avg Memory Usage", f"{avg_memory / 1e6:.2f} MB", delta=f"{avg_memory - df['memory_usage'].mean():.2f}")
+# Train models
+energy_model = RandomForestRegressor(n_estimators=100, random_state=42)
+energy_model.fit(X_train, y_energy_train)
 
-# Mini-Plots Section
-st.markdown("### Metrics Over Time")
+app_type_model = RandomForestClassifier(n_estimators=100, random_state=42)
+app_type_model.fit(X_train, y_app_type_train)
 
-fig, axs = plt.subplots(2, 2, figsize=(16, 12), sharex=True)
+# Make predictions
+y_energy_pred = energy_model.predict(X_test)
+y_app_type_pred = app_type_model.predict(X_test)
 
-# Plot Energy Consumption
-axs[0, 0].plot(df_filtered['time'], df_filtered['energy_consumption'], color='tab:blue')
-axs[0, 0].set_title('Energy Consumption (kWh)')
-axs[0, 0].set_ylabel('Energy Consumption (kWh)')
+# Metrics for energy prediction
+mse = mean_squared_error(y_energy_test, y_energy_pred)
+r2 = r2_score(y_energy_test, y_energy_pred)
 
-# Plot CPU Usage
-axs[0, 1].plot(df_filtered['time'], df_filtered['cpu_usage'], color='tab:orange')
-axs[0, 1].set_title('CPU Usage (%)')
-axs[0, 1].set_ylabel('CPU Usage (%)')
+# Metrics for app type classification
+accuracy = accuracy_score(y_app_type_test, y_app_type_pred)
+classification_report_str = classification_report(y_app_type_test, y_app_type_pred, target_names=label_encoder.classes_)
 
-# Plot Memory Usage
-axs[1, 0].plot(df_filtered['time'], df_filtered['memory_usage'] / 1e6, color='tab:green')
-axs[1, 0].set_title('Memory Usage (MB)')
-axs[1, 0].set_ylabel('Memory Usage (MB)')
+# Streamlit Layout
+st.title("⚡ Energy and App Classification Dashboard")
 
-# Plot Cumulative Values
-df_filtered['cumulative_energy'] = df_filtered['energy_consumption'].cumsum() / 2  # Halve the values
-df_filtered['cumulative_cpu'] = df_filtered['cpu_usage'].cumsum() / 2  # Halve the values
-df_filtered['cumulative_memory'] = (df_filtered['memory_usage'] / 1e6).cumsum() / 2  # Halve the values
+st.markdown("## Model Metrics")
+col1, col2 = st.columns(2)
+col1.metric("Energy Prediction - MSE", f"{mse:.2f}")
+col1.metric("Energy Prediction - R² Score", f"{r2:.2f}")
+col2.metric("App Type Classification - Accuracy", f"{accuracy:.2f}")
+st.text("Classification Report:")
+st.text(classification_report_str)
 
-axs[1, 1].plot(df_filtered['time'], df_filtered['cumulative_energy'], color='tab:blue', label='Cumulative Energy Consumption')
-axs[1, 1].plot(df_filtered['time'], df_filtered['cumulative_cpu'], color='tab:orange', linestyle='--', label='Cumulative CPU Usage')
-axs[1, 1].plot(df_filtered['time'], df_filtered['cumulative_memory'], color='tab:green', linestyle=':', label='Cumulative Memory Usage')
-axs[1, 1].set_title('Cumulative Metrics')
-axs[1, 1].set_ylabel('Cumulative Value')
-axs[1, 1].legend()
-
-# Improve layout
-plt.tight_layout()
+st.markdown("## Actual vs Predicted Energy Consumption")
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(y_energy_test.values, label='Actual Energy Consumption', marker='o')
+ax.plot(y_energy_pred, label='Predicted Energy Consumption', marker='x')
+ax.set_xlabel('Sample Index')
+ax.set_ylabel('Energy Consumption (Joules)')
+ax.set_title('Actual vs Predicted Energy Consumption')
+ax.legend()
+ax.grid(True)
 st.pyplot(fig)
 
-# Clearer Efficiency Overview
-st.markdown("### Efficiency Overview")
+# Adding user input section
+st.markdown("## User Input for New Predictions")
+cpu_usage_input = st.slider('CPU Usage', min_value=0.0, max_value=1.0, value=0.5, step=0.01)
+memory_usage_input = st.number_input('Memory Usage (in MB)', min_value=1000, max_value=10000, value=6141972)
+time_diff_input = st.slider('Time Difference (seconds)', min_value=0, max_value=300, value=60)
 
-# Define benchmarks or targets
-target_cpu_usage = 0.20
-target_memory_usage = 6142000
+# Calculating energy consumption based on user input
+user_energy_consumption = (cpu_usage_input * cpu_power_watt + memory_power_watt) * time_diff_input
 
-# Compute efficiency
-cpu_efficiency = avg_cpu / target_cpu_usage * 100
-memory_efficiency = avg_memory / target_memory_usage * 100
+# Making predictions based on user input
+user_input_data = np.array([[cpu_usage_input, memory_usage_input, user_energy_consumption]])
+predicted_app_type = app_type_model.predict(user_input_data)
+predicted_app_type_label = label_encoder.inverse_transform(predicted_app_type)
 
-col4, col5 = st.columns(2)
+# Displaying the predicted results
+st.markdown("### Prediction Results")
+st.write(f"Predicted Energy Consumption (Joules): {user_energy_consumption:.2f}")
+st.write(f"Predicted App Type: {predicted_app_type_label[0]}")
 
-col4.metric("CPU Efficiency", f"{cpu_efficiency:.1f}%", delta=f"Target: {target_cpu_usage * 100:.1f}%")
-col5.metric("Memory Efficiency", f"{memory_efficiency:.1f}%", delta=f"Target: {target_memory_usage / 1e6:.1f} MB")
-
-# Add progress bars
-st.markdown("#### CPU Usage Progress")
-st.progress(int(cpu_efficiency))
-
-st.markdown("#### Memory Usage Progress")
-st.progress(int(memory_efficiency))
-
-# Energy-saving tips based on consumption
-st.markdown("## Energy-Saving Insights 💡")
-if total_energy > 0.5:
-    st.success("Consider optimizing pipelines by reducing memory or CPU usage to save energy.")
-else:
-    st.info("Pipelines are running efficiently with low energy consumption.")
-
-# Footer
-st.markdown("<hr>", unsafe_allow_html=True)
-st.markdown(
-    """<div style="text-align: center; font-size: 12px;">
-    Gitlab API
-    </div>""",
-    unsafe_allow_html=True
-)
