@@ -122,7 +122,7 @@ else:
 st.markdown("<hr>", unsafe_allow_html=True)
 st.markdown(
     """<div style="text-align: center; font-size: 12px;">
-    Made with 💻 by [Your Name] for the Hackathon Project.
+    Made From Gitlab API.
     </div>""",
     unsafe_allow_html=True
 )
