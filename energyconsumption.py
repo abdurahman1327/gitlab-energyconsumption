@@ -67,30 +67,39 @@ col1.metric("⚡ Total Energy Consumption", f"{total_energy:.2f} kWh", delta=f"{
 col2.metric("💻 Avg CPU Usage", f"{avg_cpu:.2f}%", delta=f"{avg_cpu - df['cpu_usage'].mean():.2f}")
 col3.metric("📊 Avg Memory Usage", f"{avg_memory / 1e6:.2f} MB", delta=f"{avg_memory - df['memory_usage'].mean():.2f}")
 
-# Pipeline Metrics Over Time
-st.markdown("### Pipeline Metrics Over Time")
+# Pipeline Metrics: Four mini graphs
+st.markdown("### Pipeline Metrics")
 
-fig, ax1 = plt.subplots(figsize=(12, 6))
+# Create a 2x2 grid of mini-graphs
+fig, axs = plt.subplots(2, 2, figsize=(14, 10), sharex=True)
+fig.suptitle('Pipeline Metrics Over Time', fontsize=16)
 
-# Line plot for Energy Consumption
-color = 'tab:blue'
-ax1.set_xlabel('Time')
-ax1.set_ylabel('Energy Consumption (kWh)', color=color)
-ax1.plot(df_filtered['time'], df_filtered['energy_consumption'], color=color, label='Energy Consumption')
-ax1.tick_params(axis='y', labelcolor=color)
+# Energy Consumption Plot
+axs[0, 0].plot(df_filtered['time'], df_filtered['energy_consumption'], color='tab:blue')
+axs[0, 0].set_title('Energy Consumption')
+axs[0, 0].set_ylabel('kWh')
 
-# Creating a second y-axis for CPU and Memory Usage
-ax2 = ax1.twinx()
-color = 'tab:orange'
-ax2.set_ylabel('CPU Usage (%)', color=color)
-ax2.plot(df_filtered['time'], df_filtered['cpu_usage'], color=color, linestyle='--', label='CPU Usage')
-ax2.tick_params(axis='y', labelcolor=color)
+# CPU Usage Plot
+axs[0, 1].plot(df_filtered['time'], df_filtered['cpu_usage'], color='tab:orange')
+axs[0, 1].set_title('CPU Usage')
+axs[0, 1].set_ylabel('%')
 
-color = 'tab:green'
-ax2.plot(df_filtered['time'], df_filtered['memory_usage'] / 1e6, color=color, linestyle=':', label='Memory Usage')
-ax2.tick_params(axis='y', labelcolor=color)
+# Memory Usage Plot
+axs[1, 0].plot(df_filtered['time'], df_filtered['memory_usage'] / 1e6, color='tab:green')
+axs[1, 0].set_title('Memory Usage')
+axs[1, 0].set_ylabel('MB')
+axs[1, 0].set_xlabel('Time')
 
-fig.tight_layout()
+# Combined Plot
+axs[1, 1].plot(df_filtered['time'], df_filtered['energy_consumption'], color='tab:blue', label='Energy Consumption')
+axs[1, 1].plot(df_filtered['time'], df_filtered['cpu_usage'], color='tab:orange', linestyle='--', label='CPU Usage')
+axs[1, 1].plot(df_filtered['time'], df_filtered['memory_usage'] / 1e6, color='tab:green', linestyle=':', label='Memory Usage')
+axs[1, 1].set_title('All Metrics')
+axs[1, 1].set_ylabel('Value')
+axs[1, 1].set_xlabel('Time')
+axs[1, 1].legend()
+
+fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 st.pyplot(fig)
 
 # Clearer Efficiency Overview
@@ -127,7 +136,7 @@ else:
 st.markdown("<hr>", unsafe_allow_html=True)
 st.markdown(
     """<div style="text-align: center; font-size: 12px;">
-    Gitlab API
+    Made with 💻 by [Your Name] for the Hackathon Project.
     </div>""",
     unsafe_allow_html=True
 )
