@@ -4,10 +4,12 @@ import pandas as pd
 import seaborn as sns
 from datetime import timedelta
 
-# Customizing Seaborn style for better aesthetics
-sns.set_theme(style="whitegrid")
 
-# Sample data extracted from the given statistics
+# Setting the Streamlit theme and overall color palette for visual consistency
+st.set_page_config(page_title="Energy Consumption Dashboard", page_icon="⚡", layout="wide")
+sns.set_palette("RdYlGn")  # Red-Yellow-Green color palette for energy usage
+
+# Sample data for energy consumption
 data = {
     'time': [
         "02:30:40", "02:30:43", "02:30:46", "02:30:49", "02:30:52", "02:30:55",
@@ -41,50 +43,67 @@ df['time'] = pd.to_datetime(df['time'], format='%H:%M:%S')
 # Calculate energy consumption (a simplified formula for demonstration)
 df['energy_consumption'] = df['cpu_usage'] * df['memory_usage'] / 1e6
 
-# Adding a time range slider for filtering data
+# Sidebar for time range selection
+st.sidebar.title("⚙️ Filters")
 start_time = st.sidebar.time_input('Start Time', df['time'].min().time())
 end_time = st.sidebar.time_input('End Time', (df['time'].min() + timedelta(minutes=2)).time())
 
 # Filter the DataFrame based on the selected time range
 df_filtered = df[(df['time'].dt.time >= start_time) & (df['time'].dt.time <= end_time)]
 
-# Create Streamlit dashboard
-st.title('🚀 Innovative Energy Consumption Dashboard for Pipelines')
+# Dashboard Title
+st.title('⚡ Pipeline Energy Consumption Dashboard')
 
-# Display KPIs at the top
-st.markdown("### Key Metrics")
+# KPI Section: Show key metrics
+st.markdown("## Key Metrics")
 col1, col2, col3 = st.columns(3)
 
 total_energy = df_filtered['energy_consumption'].sum()
 avg_cpu = df_filtered['cpu_usage'].mean()
 avg_memory = df_filtered['memory_usage'].mean()
 
-col1.metric("⚡ Total Energy Consumption", f"{total_energy:.2f} units")
-col2.metric("💻 Avg CPU Usage", f"{avg_cpu:.2f}%")
-col3.metric("📊 Avg Memory Usage", f"{avg_memory / 1e6:.2f} MB")
+col1.metric("⚡ Total Energy Consumption", f"{total_energy:.2f} kWh", delta=f"{(total_energy - df['energy_consumption'].mean()):.2f}")
+col2.metric("💻 Avg CPU Usage", f"{avg_cpu:.2f}%", delta=f"{avg_cpu - df['cpu_usage'].mean():.2f}")
+col3.metric("📊 Avg Memory Usage", f"{avg_memory / 1e6:.2f} MB", delta=f"{avg_memory - df['memory_usage'].mean():.2f}")
 
-# Create a line chart to visualize energy consumption over time
+# Interactive Line Chart for Energy Consumption
 st.markdown("### Energy Consumption Over Time")
-st.line_chart(df_filtered.set_index('time')[['energy_consumption', 'cpu_usage', 'memory_usage']])
+st.line_chart(df_filtered.set_index('time')[['energy_consumption']])
 
-# Add custom Matplotlib plot with insights
-st.markdown("### Detailed Visualization")
+# Adding Heatmap for CPU and Memory Utilization
+st.markdown("### CPU and Memory Usage Heatmap")
 
+# Create a heatmap with Seaborn
 fig, ax = plt.subplots(figsize=(10, 6))
-ax.plot(df_filtered['time'], df_filtered['energy_consumption'], label='Energy Consumption', color='green', linewidth=2)
-ax.set_xlabel('Time', fontsize=12)
-ax.set_ylabel('Energy Consumption (arbitrary units)', fontsize=12)
-ax.axhline(df_filtered['energy_consumption'].mean(), color='red', linestyle='--', label='Avg Energy Consumption')
-ax.fill_between(df_filtered['time'], df_filtered['energy_consumption'], color='lightgreen', alpha=0.4)
+sns.heatmap([df_filtered['cpu_usage'], df_filtered['memory_usage']], annot=True, fmt=".2f", cmap="RdYlGn", ax=ax)
+ax.set_yticklabels(['CPU Usage (%)', 'Memory Usage (MB)'], rotation=0)
+ax.set_xticklabels(df_filtered['time'].dt.strftime('%H:%M:%S'), rotation=45)
 
-# Customize the plot further
-ax.legend(loc='upper right')
-ax.grid(True)
 st.pyplot(fig)
 
-# Insights or energy-saving tips based on data
-st.markdown("### Energy-Saving Insights 💡")
+# Progress Bars for Visualizing Efficiency
+st.markdown("### Efficiency Overview")
+col4, col5 = st.columns(2)
+
+# CPU Usage Progress
+col4.progress(int(avg_cpu * 100))  # Example of showing progress
+
+# Memory Usage Progress
+memory_efficiency = avg_memory / max(df['memory_usage']) * 100
+col5.progress(int(memory_efficiency))
+
+# Energy-saving tips based on consumption
+st.markdown("## Energy-Saving Insights 💡")
 if total_energy > 0.5:
-    st.success("Consider optimizing your pipelines by reducing memory or CPU usage to save energy.")
+    st.success("Consider optimizing pipelines by reducing memory or CPU usage to save energy.")
 else:
-    st.info("Your pipelines are already efficient with low energy consumption.")
+    st.info("Pipelines are running efficiently with low energy consumption.")
+
+# Footer
+st.markdown("<hr>", unsafe_allow_html=True)
+st.markdown(
+    """<div style="text-align: center; font-size: 12px;">
+    Made with 💻 by [Your Name] for the Hackathon Project.
+    </div>""",
+    unsafe_allow_html=True
+)
