@@ -5,9 +5,25 @@ import seaborn as sns
 from datetime import timedelta
 
 
-# Setting the Streamlit theme and overall color palette for visual consistency
+
+# Set Streamlit theme and page configuration
 st.set_page_config(page_title="Energy Consumption Dashboard", page_icon="⚡", layout="wide")
-sns.set_palette("RdYlGn")  # Red-Yellow-Green color palette for energy usage
+st.markdown("""
+    <style>
+    .reportview-container {
+        background-color: #2E2E2E;
+    }
+    .sidebar .sidebar-content {
+        background-color: #1E1E1E;
+    }
+    .block-container {
+        padding: 2rem;
+    }
+    .css-1v0mbdj {
+        color: white;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # Sample data for energy consumption
 data = {
@@ -75,22 +91,32 @@ st.markdown("### CPU and Memory Usage Heatmap")
 
 # Create a heatmap with Seaborn
 fig, ax = plt.subplots(figsize=(10, 6))
-sns.heatmap([df_filtered['cpu_usage'], df_filtered['memory_usage']], annot=True, fmt=".2f", cmap="RdYlGn", ax=ax)
-ax.set_yticklabels(['CPU Usage (%)', 'Memory Usage (MB)'], rotation=0)
+sns.heatmap([df_filtered['cpu_usage'], df_filtered['memory_usage']], cmap="RdYlGn_r", ax=ax, cbar=True, cbar_kws={'label': 'Usage'}, linewidths=0.5, linecolor='black')
+ax.set_yticklabels([])
 ax.set_xticklabels(df_filtered['time'].dt.strftime('%H:%M:%S'), rotation=45)
+
+# Hide gridlines
+ax.grid(False)
+
+# Use dark background color
+ax.set_facecolor('#2E2E2E')
+fig.patch.set_facecolor('#2E2E2E')
 
 st.pyplot(fig)
 
-# Progress Bars for Visualizing Efficiency
+# Enhanced Efficiency Overview
 st.markdown("### Efficiency Overview")
 col4, col5 = st.columns(2)
 
 # CPU Usage Progress
-col4.progress(int(avg_cpu * 100))  # Example of showing progress
+col4.markdown("#### CPU Usage")
+cpu_efficiency = int(avg_cpu)
+col4.progress(cpu_efficiency, text=f"CPU Usage: {cpu_efficiency}%")
 
 # Memory Usage Progress
+col5.markdown("#### Memory Usage")
 memory_efficiency = avg_memory / max(df['memory_usage']) * 100
-col5.progress(int(memory_efficiency))
+col5.progress(int(memory_efficiency), text=f"Memory Usage: {int(memory_efficiency)}%")
 
 # Energy-saving tips based on consumption
 st.markdown("## Energy-Saving Insights 💡")
@@ -102,7 +128,7 @@ else:
 # Footer
 st.markdown("<hr>", unsafe_allow_html=True)
 st.markdown(
-    """<div style="text-align: center; font-size: 12px;">
+    """<div style="text-align: center; font-size: 12px; color: white;">
     Made with 💻 by [Your Name] for the Hackathon Project.
     </div>""",
     unsafe_allow_html=True
