@@ -67,7 +67,7 @@ col1.metric("⚡ Total Energy Consumption", f"{total_energy:.2f} kWh", delta=f"{
 col2.metric("💻 Avg CPU Usage", f"{avg_cpu:.2f}%", delta=f"{avg_cpu - df['cpu_usage'].mean():.2f}")
 col3.metric("📊 Avg Memory Usage", f"{avg_memory / 1e6:.2f} MB", delta=f"{avg_memory - df['memory_usage'].mean():.2f}")
 
-# Line Charts for Energy Consumption, CPU and Memory Usage
+# Pipeline Metrics Over Time
 st.markdown("### Pipeline Metrics Over Time")
 
 fig, ax1 = plt.subplots(figsize=(12, 6))
@@ -140,3 +140,9 @@ else:
 
 # Footer
 st.markdown("<hr>", unsafe_allow_html=True)
+st.markdown(
+    """<div style="text-align: center; font-size: 12px;">
+    Made with 💻 by [Your Name] for the Hackathon Project.
+    </div>""",
+    unsafe_allow_html=True
+)
