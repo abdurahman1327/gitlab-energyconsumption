@@ -75,10 +75,20 @@ st.line_chart(df_filtered.set_index('time')[['energy_consumption']])
 st.markdown("### CPU and Memory Usage Heatmap")
 
 # Create a heatmap with Seaborn
-fig, ax = plt.subplots(figsize=(10, 6))
-sns.heatmap([df_filtered['cpu_usage'], df_filtered['memory_usage']],
-            cmap="RdYlGn", ax=ax, cbar=True, cbar_kws={'label': 'Usage'},
-            linewidths=0.5, linecolor='gray')
+fig, ax = plt.subplots(figsize=(12, 8))
+data_heatmap = pd.DataFrame({
+    'Time': df_filtered['time'],
+    'CPU Usage': df_filtered['cpu_usage'],
+    'Memory Usage': df_filtered['memory_usage']
+}).set_index('Time').T
+
+# Normalize data for better visualization
+norm_cpu = (data_heatmap.loc['CPU Usage'] - data_heatmap.loc['CPU Usage'].min()) / (data_heatmap.loc['CPU Usage'].max() - data_heatmap.loc['CPU Usage'].min())
+norm_memory = (data_heatmap.loc['Memory Usage'] - data_heatmap.loc['Memory Usage'].min()) / (data_heatmap.loc['Memory Usage'].max() - data_heatmap.loc['Memory Usage'].min())
+
+sns.heatmap([norm_cpu, norm_memory],
+            cmap="RdYlGn_r", ax=ax, cbar=True, cbar_kws={'label': 'Normalized Usage'},
+            linewidths=0.5, linecolor='gray', annot=False)
 
 # Removing labels and ticks for a cleaner look
 ax.set_xticks([])
@@ -122,7 +132,7 @@ else:
 st.markdown("<hr>", unsafe_allow_html=True)
 st.markdown(
     """<div style="text-align: center; font-size: 12px;">
-    Made From Gitlab API.
+    Made with GITLAB API.
     </div>""",
     unsafe_allow_html=True
 )
