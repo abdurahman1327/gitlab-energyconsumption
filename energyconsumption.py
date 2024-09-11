@@ -67,34 +67,44 @@ col1.metric("⚡ Total Energy Consumption", f"{total_energy:.2f} kWh", delta=f"{
 col2.metric("💻 Avg CPU Usage", f"{avg_cpu:.2f}%", delta=f"{avg_cpu - df['cpu_usage'].mean():.2f}")
 col3.metric("📊 Avg Memory Usage", f"{avg_memory / 1e6:.2f} MB", delta=f"{avg_memory - df['memory_usage'].mean():.2f}")
 
-# Interactive Line Chart for Energy Consumption
-st.markdown("### Energy Consumption Over Time")
-st.line_chart(df_filtered.set_index('time')[['energy_consumption']])
+# Line Charts for Energy Consumption, CPU and Memory Usage
+st.markdown("### Pipeline Metrics Over Time")
 
-# Adding Heatmap for CPU and Memory Utilization
-st.markdown("### CPU and Memory Usage Heatmap")
+fig, ax1 = plt.subplots(figsize=(12, 6))
 
-# Create a heatmap with Seaborn
-fig, ax = plt.subplots(figsize=(12, 8))
-data_heatmap = pd.DataFrame({
-    'Time': df_filtered['time'],
-    'CPU Usage': df_filtered['cpu_usage'],
-    'Memory Usage': df_filtered['memory_usage']
-}).set_index('Time').T
+# Line plot for Energy Consumption
+color = 'tab:blue'
+ax1.set_xlabel('Time')
+ax1.set_ylabel('Energy Consumption (kWh)', color=color)
+ax1.plot(df_filtered['time'], df_filtered['energy_consumption'], color=color, label='Energy Consumption')
+ax1.tick_params(axis='y', labelcolor=color)
 
-# Normalize data for better visualization
-norm_cpu = (data_heatmap.loc['CPU Usage'] - data_heatmap.loc['CPU Usage'].min()) / (data_heatmap.loc['CPU Usage'].max() - data_heatmap.loc['CPU Usage'].min())
-norm_memory = (data_heatmap.loc['Memory Usage'] - data_heatmap.loc['Memory Usage'].min()) / (data_heatmap.loc['Memory Usage'].max() - data_heatmap.loc['Memory Usage'].min())
+# Creating a second y-axis for CPU and Memory Usage
+ax2 = ax1.twinx()
+color = 'tab:orange'
+ax2.set_ylabel('CPU Usage (%)', color=color)
+ax2.plot(df_filtered['time'], df_filtered['cpu_usage'], color=color, linestyle='--', label='CPU Usage')
+ax2.tick_params(axis='y', labelcolor=color)
 
-sns.heatmap([norm_cpu, norm_memory],
-            cmap="RdYlGn_r", ax=ax, cbar=True, cbar_kws={'label': 'Normalized Usage'},
-            linewidths=0.5, linecolor='gray', annot=False)
+color = 'tab:green'
+ax2.plot(df_filtered['time'], df_filtered['memory_usage'] / 1e6, color=color, linestyle=':', label='Memory Usage')
+ax2.tick_params(axis='y', labelcolor=color)
 
-# Removing labels and ticks for a cleaner look
-ax.set_xticks([])
-ax.set_yticks([])
-ax.set_xticklabels([])
-ax.set_yticklabels([])
+fig.tight_layout()
+st.pyplot(fig)
+
+# Bar Chart for Total Energy Consumption by Time Interval
+st.markdown("### Energy Consumption by Time Interval")
+
+# Set time intervals (e.g., 10 seconds) and aggregate data
+intervals = pd.Grouper(key='time', freq='10S')
+df_resampled = df_filtered.resample(intervals, on='time').sum()
+
+fig, ax = plt.subplots(figsize=(12, 6))
+df_resampled['energy_consumption'].plot(kind='bar', ax=ax, color='skyblue', edgecolor='black')
+ax.set_xlabel('Time Interval')
+ax.set_ylabel('Total Energy Consumption (kWh)')
+ax.set_title('Energy Consumption by Time Interval')
 
 st.pyplot(fig)
 
@@ -130,9 +140,3 @@ else:
 
 # Footer
 st.markdown("<hr>", unsafe_allow_html=True)
-st.markdown(
-    """<div style="text-align: center; font-size: 12px;">
-    Made with GITLAB API.
-    </div>""",
-    unsafe_allow_html=True
-)
