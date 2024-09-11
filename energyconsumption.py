@@ -93,23 +93,6 @@ ax2.tick_params(axis='y', labelcolor=color)
 fig.tight_layout()
 st.pyplot(fig)
 
-# Adding Heatmap for CPU and Memory Utilization
-st.markdown("### CPU and Memory Usage Heatmap")
-
-# Create a heatmap with Seaborn
-fig, ax = plt.subplots(figsize=(10, 6))
-sns.heatmap([df_filtered['cpu_usage'], df_filtered['memory_usage']],
-            cmap="RdYlGn", ax=ax, cbar=True, cbar_kws={'label': 'Usage'},
-            linewidths=0.5, linecolor='gray')
-
-# Removing labels and ticks for a cleaner look
-ax.set_xticks([])
-ax.set_yticks([])
-ax.set_xticklabels([])
-ax.set_yticklabels([])
-
-st.pyplot(fig)
-
 # Clearer Efficiency Overview
 st.markdown("### Efficiency Overview")
 
